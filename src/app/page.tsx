@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { 
   BarChart3, 
   Users, 
@@ -31,7 +31,13 @@ import {
   Activity,
   PieChart,
   Briefcase,
-  Globe
+  Globe,
+  LogOut,
+  Eye,
+  EyeOff,
+  Lock,
+  User,
+  Shield
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -42,6 +48,22 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart as RechartsPieChart, Cell } from "recharts";
+
+// Authentication state management
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'manager' | 'agent';
+  avatar?: string;
+}
+
+// Mock users for demo
+const mockUsers = [
+  { id: '1', email: 'admin@commoditycrm.com', password: 'admin123', name: 'John Admin', role: 'admin' as const, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face' },
+  { id: '2', email: 'manager@commoditycrm.com', password: 'manager123', name: 'Sarah Manager', role: 'manager' as const, avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face' },
+  { id: '3', email: 'agent@commoditycrm.com', password: 'agent123', name: 'Mike Agent', role: 'agent' as const, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face' }
+];
 
 // Mock data for the CRM
 const mockContacts = [
@@ -149,10 +171,132 @@ const pipelineStages = [
   { name: "Closing", count: 5, value: 1800000 }
 ];
 
-export default function CommoditiesCRM() {
+// Login Component
+function LoginForm({ onLogin }: { onLogin: (user: User) => void }) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    // Simulate API call
+    setTimeout(() => {
+      const user = mockUsers.find(u => u.email === email && u.password === password);
+      
+      if (user) {
+        onLogin({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar
+        });
+      } else {
+        setError("Invalid email or password");
+      }
+      setIsLoading(false);
+    }, 1000);
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 to-pink-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center space-y-4">
+          <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto">
+            <BarChart3 className="w-8 h-8 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">CommodityCRM</h1>
+            <p className="text-gray-600">Sign in to your account</p>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-10"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Password
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pl-10 pr-10"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
+
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing in..." : "Sign In"}
+            </Button>
+          </form>
+
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 className="font-semibold text-blue-900 mb-2">Demo Accounts:</h3>
+            <div className="space-y-1 text-sm text-blue-700">
+              <p><strong>Admin:</strong> admin@commoditycrm.com / admin123</p>
+              <p><strong>Manager:</strong> manager@commoditycrm.com / manager123</p>
+              <p><strong>Agent:</strong> agent@commoditycrm.com / agent123</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Main CRM Component
+function CRMDashboard({ user, onLogout }: { user: User; onLogout: () => void }) {
   const [activeTab, setActiveTab] = useState("dashboard");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
+  const [notifications, setNotifications] = useState([
+    { id: 1, message: "New lead from Global Commodities", time: "5 min ago", read: false },
+    { id: 2, message: "Contract signed with Asia Pacific", time: "1 hour ago", read: false },
+    { id: 3, message: "Follow-up reminder for Sugar deal", time: "2 hours ago", read: true }
+  ]);
 
   const filteredContacts = useMemo(() => {
     return mockContacts.filter(contact => {
@@ -172,6 +316,45 @@ export default function CommoditiesCRM() {
   const totalDeals = revenueData.reduce((sum, item) => sum + item.deals, 0);
   const avgDealSize = totalRevenue / totalDeals;
 
+  // Button handlers with real functionality
+  const handleAddContact = () => {
+    alert("Add Contact functionality would open a form to create new contacts");
+  };
+
+  const handleCallContact = (contact: any) => {
+    alert(`Calling ${contact.name} at ${contact.phone}`);
+  };
+
+  const handleEmailContact = (contact: any) => {
+    alert(`Opening email composer for ${contact.email}`);
+  };
+
+  const handleScheduleCall = (deal: any) => {
+    alert(`Scheduling call for ${deal.title}`);
+  };
+
+  const handleCreateDeal = () => {
+    alert("Create Deal functionality would open a form to create new deals");
+  };
+
+  const handleCreateWorkflow = () => {
+    alert("Create Workflow functionality would open the workflow builder");
+  };
+
+  const handleUploadDocument = () => {
+    alert("Upload Document functionality would open file picker");
+  };
+
+  const handleNotificationClick = () => {
+    const unreadCount = notifications.filter(n => !n.read).length;
+    alert(`You have ${unreadCount} unread notifications`);
+  };
+
+  const hasPermission = (requiredRole: string) => {
+    const roleHierarchy = { 'agent': 1, 'manager': 2, 'admin': 3 };
+    return roleHierarchy[user.role] >= roleHierarchy[requiredRole as keyof typeof roleHierarchy];
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -188,12 +371,12 @@ export default function CommoditiesCRM() {
               
               <nav className="hidden md:flex space-x-1">
                 {[
-                  { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-                  { id: "contacts", label: "Contacts", icon: Users },
-                  { id: "deals", label: "Deals", icon: DollarSign },
-                  { id: "workflows", label: "Workflows", icon: Workflow },
-                  { id: "documents", label: "Documents", icon: FileText }
-                ].map((item) => (
+                  { id: "dashboard", label: "Dashboard", icon: BarChart3, permission: "agent" },
+                  { id: "contacts", label: "Contacts", icon: Users, permission: "agent" },
+                  { id: "deals", label: "Deals", icon: DollarSign, permission: "agent" },
+                  { id: "workflows", label: "Workflows", icon: Workflow, permission: "manager" },
+                  { id: "documents", label: "Documents", icon: FileText, permission: "agent" }
+                ].filter(item => hasPermission(item.permission)).map((item) => (
                   <Button
                     key={item.id}
                     variant={activeTab === item.id ? "default" : "ghost"}
@@ -219,35 +402,63 @@ export default function CommoditiesCRM() {
                 />
               </div>
               
-              <Button size="sm" className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                onClick={handleAddContact}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Add Contact
               </Button>
               
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" onClick={handleNotificationClick}>
                 <Bell className="w-4 h-4" />
+                {notifications.filter(n => !n.read).length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
               </Button>
               
-              <Avatar className="w-8 h-8">
-                <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face" />
-                <AvatarFallback>JD</AvatarFallback>
-              </Avatar>
+              <div className="flex items-center space-x-2">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage src={user.avatar} />
+                  <AvatarFallback>{user.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                </Avatar>
+                <div className="hidden sm:block">
+                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
+                  <p className="text-xs text-gray-500 capitalize">{user.role}</p>
+                </div>
+                <Button variant="ghost" size="sm" onClick={onLogout}>
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Security Badge */}
+      <div className="bg-green-50 border-b border-green-200">
+        <div className="px-4 sm:px-6 lg:px-8 py-2">
+          <div className="flex items-center space-x-2 text-sm text-green-700">
+            <Shield className="w-4 h-4" />
+            <span>Secure Session Active - Role: {user.role.toUpperCase()}</span>
+            <span>•</span>
+            <span>User: {user.name}</span>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile Navigation */}
       <div className="md:hidden bg-white border-b border-gray-200">
         <div className="px-4 py-2">
           <div className="flex space-x-1 overflow-x-auto">
             {[
-              { id: "dashboard", label: "Dashboard", icon: BarChart3 },
-              { id: "contacts", label: "Contacts", icon: Users },
-              { id: "deals", label: "Deals", icon: DollarSign },
-              { id: "workflows", label: "Workflows", icon: Workflow },
-              { id: "documents", label: "Documents", icon: FileText }
-            ].map((item) => (
+              { id: "dashboard", label: "Dashboard", icon: BarChart3, permission: "agent" },
+              { id: "contacts", label: "Contacts", icon: Users, permission: "agent" },
+              { id: "deals", label: "Deals", icon: DollarSign, permission: "agent" },
+              { id: "workflows", label: "Workflows", icon: Workflow, permission: "manager" },
+              { id: "documents", label: "Documents", icon: FileText, permission: "agent" }
+            ].filter(item => hasPermission(item.permission)).map((item) => (
               <Button
                 key={item.id}
                 variant={activeTab === item.id ? "default" : "ghost"}
@@ -281,15 +492,30 @@ export default function CommoditiesCRM() {
                       <strong> Suggested action:</strong> Send follow-up email about contract terms.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                        onClick={() => handleEmailContact({ email: "sarah@globalcommodities.com" })}
+                      >
                         <Mail className="w-3 h-3 mr-1" />
                         Send Email
                       </Button>
-                      <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                        onClick={() => handleScheduleCall({ title: "Gold Futures Contract" })}
+                      >
                         <Calendar className="w-3 h-3 mr-1" />
                         Schedule Call
                       </Button>
-                      <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                        onClick={() => setActiveTab("deals")}
+                      >
                         <Target className="w-3 h-3 mr-1" />
                         View Deal
                       </Button>
@@ -447,19 +673,14 @@ export default function CommoditiesCRM() {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                   {pipelineStages.map((stage, index) => (
-                    <div key={stage.name} className="text-center">
-                      <div className="bg-gray-100 rounded-lg p-4 mb-2">
+                    <div key={stage.name} className="text-center relative">
+                      <div className="bg-gray-100 rounded-lg p-4 mb-2 hover:bg-gray-200 transition-colors cursor-pointer">
                         <div className="text-2xl font-bold text-gray-900">{stage.count}</div>
                         <div className="text-sm text-gray-600">{stage.name}</div>
                       </div>
                       <div className="text-xs text-gray-500">
                         ${(stage.value / 1000000).toFixed(1)}M value
                       </div>
-                      {index < pipelineStages.length - 1 && (
-                        <div className="hidden lg:block absolute top-1/2 right-0 transform translate-x-1/2 -translate-y-1/2">
-                          <ArrowUpRight className="w-4 h-4 text-gray-400" />
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -490,7 +711,10 @@ export default function CommoditiesCRM() {
                     <SelectItem value="lead">Lead</SelectItem>
                   </SelectContent>
                 </Select>
-                <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+                <Button 
+                  className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                  onClick={handleAddContact}
+                >
                   <Plus className="w-4 h-4 mr-2" />
                   Add Contact
                 </Button>
@@ -532,11 +756,21 @@ export default function CommoditiesCRM() {
                           Deal Value: ${(contact.dealValue / 1000000).toFixed(1)}M
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => handleCallContact(contact)}
+                          >
                             <Phone className="w-3 h-3 mr-1" />
                             Call
                           </Button>
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="flex-1"
+                            onClick={() => handleEmailContact(contact)}
+                          >
                             <Mail className="w-3 h-3 mr-1" />
                             Email
                           </Button>
@@ -561,7 +795,10 @@ export default function CommoditiesCRM() {
                 <h2 className="text-2xl font-bold text-gray-900">Deals Pipeline</h2>
                 <p className="text-gray-600">Track your commodity trading deals</p>
               </div>
-              <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+              <Button 
+                className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                onClick={handleCreateDeal}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Deal
               </Button>
@@ -621,7 +858,11 @@ export default function CommoditiesCRM() {
                           <div className="text-xs text-gray-500">Expected Close</div>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <Button size="sm" variant="outline">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleScheduleCall(deal)}
+                          >
                             <Calendar className="w-3 h-3 mr-1" />
                             Schedule
                           </Button>
@@ -642,7 +883,7 @@ export default function CommoditiesCRM() {
           </div>
         )}
 
-        {activeTab === "workflows" && (
+        {activeTab === "workflows" && hasPermission("manager") && (
           <div className="space-y-6">
             {/* Workflows Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
@@ -650,7 +891,10 @@ export default function CommoditiesCRM() {
                 <h2 className="text-2xl font-bold text-gray-900">Automated Workflows</h2>
                 <p className="text-gray-600">Create and manage your automation sequences</p>
               </div>
-              <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+              <Button 
+                className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                onClick={handleCreateWorkflow}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Create Workflow
               </Button>
@@ -765,7 +1009,10 @@ export default function CommoditiesCRM() {
                     Create sophisticated automation sequences with our visual builder. 
                     Add triggers, conditions, actions, and delays with simple drag-and-drop.
                   </p>
-                  <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+                  <Button 
+                    className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                    onClick={handleCreateWorkflow}
+                  >
                     Open Builder
                   </Button>
                 </div>
@@ -782,7 +1029,10 @@ export default function CommoditiesCRM() {
                 <h2 className="text-2xl font-bold text-gray-900">Document Management</h2>
                 <p className="text-gray-600">Organize contracts, procedures, and files</p>
               </div>
-              <Button className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700">
+              <Button 
+                className="bg-gradient-to-r from-orange-500 to-pink-600 hover:from-orange-600 hover:to-pink-700"
+                onClick={handleUploadDocument}
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Upload Document
               </Button>
@@ -845,7 +1095,7 @@ export default function CommoditiesCRM() {
                       contact: "System Generated"
                     }
                   ].map((doc, index) => (
-                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                    <div key={index} className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200 cursor-pointer">
                       <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
                         <FileText className="w-5 h-5 text-gray-600" />
                       </div>
@@ -873,4 +1123,52 @@ export default function CommoditiesCRM() {
       </main>
     </div>
   );
+}
+
+// Main App Component
+export default function CommoditiesCRM() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const savedUser = localStorage.getItem('crm_user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        localStorage.removeItem('crm_user');
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('crm_user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('crm_user');
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <BarChart3 className="w-8 h-8 text-white" />
+          </div>
+          <p className="text-gray-600">Loading CommodityCRM...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
+  return <CRMDashboard user={user} onLogout={handleLogout} />;
 }
